@@ -16,9 +16,9 @@ function test_syr2k_err(m,mat_szs,eps)
       v = rand([m,mat_szs(i)])-.5;
       z = eps.*(rand([m,mat_szs(i)])-.5);
       R = rand([mat_szs(i),mat_szs(i)])-5.;
-      S = R + R';
-%      S = eye(mat_szs(i));
-      w = v*S+z;
+%      S = R + R';
+      S = eye(mat_szs(i));
+      w = v+z;
       corr_ans = v*z'-z*v';
       %norm(corr_ans)
       %norm(Z)
@@ -38,8 +38,8 @@ function test_syr2k_err(m,mat_szs,eps)
   end
   [rel_err_syr2k, rel_err_fast_syr2k]
   loglog(mat_szs,rel_err_fast_syr2k,'-*g',mat_szs,rel_err_syr2k,'-or', mat_szs,rel_err_fast_syr2k_vz,'-xb');
-  legend('fast syr2k(A,A*S+eps*B) error','syr2k(A,A*S+eps*B) error','fast syr2k(A,eps*B) error','Location','East');
+  legend('\Phi(A,A*S+eps*B) error','\Psi(A,A*S+eps*B) error','\Phi(A,eps*B) error','Location','East');
   xlabel('# of columns in random matrices A and B');
-  ylabel('Relative forward error');
-  title('Error of A*(A*S+eps*B)^T-(A*S+eps*B)*A^T relative to eps*A*B^T-eps*B*A^T');
+  ylabel('Relative forward error with respect to \Phi(A,eps*B)');
+  title('Relative error of C=A*(A*S+eps*B)^T-(A*S+eps*B)*A^T');
 end
