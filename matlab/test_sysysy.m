@@ -26,9 +26,11 @@ function test_sysysy(ns)
   end
   rel_err_AB
   rel_err_AA
-  loglog(ns,rel_err_AB,'-*g',ns,rel_err_AA,'-or');
-  legend('\Phi(A,B) relative error','\Phi(A,A) relative error')
-  xlabel('dimension of A and B');
-  ylabel('Relative forward error with respect standard algorithm');
-  title('Relative error of Jordan matrix multiplication using fast symmetric algorithm');
+  loglog(ns,rel_err_AA,'-or',ns,rel_err_AB,'-*g');
+  hleg=legend('\Phi(A,A) relative error','\Phi(A,B) relative error')
+  set(hleg,'FontSize',13,'FontWeight','bold')
+  xlabel('dimension of A and B','FontSize',13,'FontWeight','bold');
+  ylabel('Relative forward error with respect standard algorithm','FontSize',13,'FontWeight','bold');
+  title('Relative error of Jordan matrix multiplication using fast symmetric algorithm','FontSize',13,'FontWeight','bold');
+  set(findall(gcf,'type','axes'),'fontSize',13,'FontWeight','bold')
 end
