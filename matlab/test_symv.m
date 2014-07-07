@@ -40,7 +40,7 @@ function test_symv(ns)
 %  loglog(ns,rel_err_Ab,'-or');
 %  legend('positive random A relative error')
   xlabel('dimension of A and b','FontSize',13,'FontWeight','bold');
-  ylabel('Relative forward error with to respect standard algorithm','FontSize',13,'FontWeight','bold');
+  ylabel('Relative forward error with respect to standard algorithm','FontSize',13,'FontWeight','bold');
   title('Relative error of c=A*b using fast symmetric algorithm','FontSize',13,'FontWeight','bold');
 %  set(findall(gcf,'type','text')) 
 %  set(gca,'FontSize',15,'fontWeight','bold')

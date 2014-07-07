@@ -30,7 +30,7 @@ function test_sysysy(ns)
   hleg=legend('\Phi(A,A) relative error','\Phi(A,B) relative error')
   set(hleg,'FontSize',13,'FontWeight','bold')
   xlabel('dimension of A and B','FontSize',13,'FontWeight','bold');
-  ylabel('Relative forward error with respect standard algorithm','FontSize',13,'FontWeight','bold');
+  ylabel('Relative forward error with respect to standard algorithm','FontSize',13,'FontWeight','bold');
   title('Relative error of Jordan matrix multiplication using fast symmetric algorithm','FontSize',13,'FontWeight','bold');
   set(findall(gcf,'type','axes'),'fontSize',13,'FontWeight','bold')
 end
