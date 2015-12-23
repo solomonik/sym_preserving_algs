@@ -1,5 +1,5 @@
-function test_symv(ns)
-  ntest = size(ns,1);
+function test_symv2(ns)
+  ntest = size(ns,2);
 
   rel_err_Ab = zeros(ntest,1);
   rel_err_pAb = zeros(ntest,1);
@@ -49,17 +49,24 @@ function test_symv(ns)
 %  set(0,'defaultAxesFontSize',20);
 %set(0,'defaultTextFontSize',20)
   [rel_err_fast; rel_err_stnd]
-  loglog(ns,rel_err_fast,'-or',ns,rel_err_stnd,'-*g');
-  hleg=legend('fast algorithm relative error','standard algorithm relative error');
-  set(hleg,'FontSize',13,'FontWeight','bold')
+  set(0,'DefaultTextFontname', 'Times New Roman');
+  loglog(ns,rel_err_fast,'-or',ns,rel_err_stnd,'-*b');
+  hleg=legend('symmetry preserving algorithm relative error','direct evaluation algorithm relative error');
+  set(hleg,'FontSize',14); %,'FontWeight','bold')
+  set(gca,'GridAlpha',.5);
 %  loglog(ns,rel_err_Ab,'-or');
 %  legend('positive random A relative error')
-  xlabel('dimension of A and b','FontSize',13,'FontWeight','bold');
-  ylabel('Relative forward error with respect to exact solution','FontSize',13,'FontWeight','bold');
-  title('Relative error of c=A*b with positive A and alternating b','FontSize',13,'FontWeight','bold');
+  xlabel('dimension of A and b','FontSize',14); %,'FontWeight','bold');
+  ylabel('Relative forward error with respect to exact solution','FontSize',14);%3,'FontWeight','bold');
+  title('Relative error of c=A*b with positive A and alternating b','FontSize',14,'FontWeight','normal');%,'FontWeight','bold');
+  ax = gca;
+  ax.GridAlpha = .25;
+  ax.MinorGridAlpha = .8;
+  ax.MinorGridColor = [.15 .15 .15];
+  grid on;
 %  set(findall(gcf,'type','text')) 
 %  set(gca,'FontSize',15,'fontWeight','bold')
 %  set(findall(gcf,'type','text'),'FontSize',15,'fontWeight','bold')
-  set(findall(gcf,'type','axes'),'FontSize',13,'FontWeight','bold')
+  set(findall(gcf,'type','axes'),'FontSize',14);%3,'FontWeight','bold')
 %  set(findall(gcf,'type','text'),'fontSize',16) 
 end

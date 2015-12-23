@@ -1,5 +1,5 @@
 function test_sysysy(ns)
-  ntest = size(ns,1);
+  ntest = size(ns,2);
 
   rel_err_stnd = zeros(ntest,1);
   rel_err_fast = zeros(ntest,1);
@@ -27,11 +27,18 @@ function test_sysysy(ns)
   end
   rel_err_fast
   rel_err_stnd
-  loglog(ns,rel_err_fast,'-or',ns,rel_err_stnd,'-*g');
-  hleg=legend('fast algorithm relative error','standard algorithm relative error')
-  set(hleg,'FontSize',13,'FontWeight','bold')
-  xlabel('dimension of A','FontSize',13,'FontWeight','bold');
-  ylabel('Relative forward error with respect to exact solution','FontSize',13,'FontWeight','bold');
-  title('Relative error of squaring a Householder transformation','FontSize',13,'FontWeight','bold');
-  set(findall(gcf,'type','axes'),'fontSize',13,'FontWeight','bold')
+  set(0,'DefaultTextFontname', 'Times New Roman');
+  loglog(ns,rel_err_fast,'-or',ns,rel_err_stnd,'-*b');
+  hleg=legend('symmetry preserving algorithm relative error','direct evaluation algorithm relative error');
+  set(hleg,'FontSize',14,'FontWeight','normal')
+  set(gca,'GridAlpha',.5);
+  xlabel('dimension of A','FontSize',14,'FontWeight','normal');
+  ylabel('Relative forward error with respect to exact solution','FontSize',14,'FontWeight','normal');
+  title('Relative error of squaring a Householder transformation','FontSize',14,'FontWeight','normal');
+  ax = gca;
+  ax.GridAlpha = .25;
+  ax.MinorGridAlpha = .8;
+  ax.MinorGridColor = [.15 .15 .15];
+  grid on;
+  set(findall(gcf,'type','axes'),'fontSize',14,'FontWeight','normal')
 end
