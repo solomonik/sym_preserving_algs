@@ -1,3 +1,4 @@
+import ctf
 import numpy as np
 import sys
 import time
@@ -7,22 +8,22 @@ from pathlib import Path
 from os.path import dirname, join
 
 def naive_gemm(A,B,n,b):
-    C = np.dot(A,B)
+    C = ctf.dot(A,B)
     C += C.reshape((n,b,n,b)).transpose([2,1,0,3]).reshape((n*b,n*b))
     return C
 
 def fast_gemm(A,B,n,b):
     A = A.reshape((n,b,n,b)).transpose([0,2,1,3])
     B = B.reshape((n,b,n,b)).transpose([0,2,1,3])
-    sA = -np.einsum("ijxy->ixy",A)
-    sB = -np.einsum("ijxy->ixy",B)
+    sA = -ctf.einsum("ijxy->ixy",A)
+    sB = -ctf.einsum("ijxy->ixy",B)
     for i in range(n):
         sA[i,:,:] += 2.*A[i,i,:,:]
         sB[i,:,:] += 2.*B[i,i,:,:]
     nn = n*(n-1)*(n-2)//6
-    idPC = np.zeros((nn,n,n))
-    idPA = np.zeros((nn,n,n))
-    idPB = np.zeros((nn,n,n))
+    idPC = ctf.zeros((nn,n,n))
+    idPA = ctf.zeros((nn,n,n))
+    idPB = ctf.zeros((nn,n,n))
     l = 0
     for i in range(n):
         for j in range(i):
@@ -31,17 +32,17 @@ def fast_gemm(A,B,n,b):
                 idPA[l,i,k] = 1
                 idPB[l,j,k] = 1
                 l+=1
-    oA = np.einsum("aij,ijxy->axy",idPC,A)+np.einsum("aik,ikxy->axy",idPA,A)+np.einsum("ajk,jkxy->axy",idPB,A)
-    oB = np.einsum("aij,ijxy->axy",idPC,B)+np.einsum("aik,ikxy->axy",idPA,B)+np.einsum("ajk,jkxy->axy",idPB,B)
-    P = np.einsum("axy,ayz->axz",oA,oB)
-    Z = np.einsum("aij,axy->ijxy",idPC,P) + np.einsum("aik,axy->ikxy",idPA,P) + np.einsum("ajk,axy->jkxy",idPB,P)
+    oA = ctf.einsum("aij,ijxy->axy",idPC,A)+ctf.einsum("aik,ikxy->axy",idPA,A)+ctf.einsum("ajk,jkxy->axy",idPB,A)
+    oB = ctf.einsum("aij,ijxy->axy",idPC,B)+ctf.einsum("aik,ikxy->axy",idPA,B)+ctf.einsum("ajk,jkxy->axy",idPB,B)
+    P = ctf.einsum("axy,ayz->axz",oA,oB)
+    Z = ctf.einsum("aij,axy->ijxy",idPC,P) + ctf.einsum("aik,axy->ikxy",idPA,P) + ctf.einsum("ajk,axy->jkxy",idPB,P)
     Z += Z.transpose([1,0,2,3])
-    U = np.einsum("ijxy,iyz->ijxz",A,sB)
+    U = ctf.einsum("ijxy,iyz->ijxz",A,sB)
     U += U.transpose([1,0,2,3])
-    V = np.einsum("ixy,ijyz->ijxz",sA,B)
+    V = ctf.einsum("ixy,ijyz->ijxz",sA,B)
     V += V.transpose([1,0,2,3])
-    W = np.einsum("ijxy,ijyz->ijxz",A,B)
-    sW = np.einsum("ijxy->ixy",W)
+    W = ctf.einsum("ijxy,ijyz->ijxz",A,B)
+    sW = ctf.einsum("ijxy->ixy",W)
     for i in range(n):
         sW[i,:,:] -= W[i,i,:,:]
         U[i,i,:,:] = 0
@@ -57,15 +58,15 @@ def fast_gemm(A,B,n,b):
     return C.transpose([0,2,1,3]).reshape((n*b,n*b))
 
 def test(n,b):
-    A = np.ones((n,b,n,b))
-    B = np.ones((n,b,n,b))
-    np.random.seed(42)
-    A = np.random.random((n,b,n,b))
-    B = np.random.random((n,b,n,b))
+    A = ctf.ones((n,b,n,b))
+    B = ctf.ones((n,b,n,b))
+    ctf.random.seed(42)
+    A = ctf.random.random((n,b,n,b))
+    B = ctf.random.random((n,b,n,b))
     A = (A + A.transpose([2,1,0,3])).reshape((n*b,n*b))
-    #A = np.ones((n*b,n*b))
+    #A = ctf.ones((n*b,n*b))
     B = (B + B.transpose([2,1,0,3])).reshape((n*b,n*b))
-    #B = np.ones((n*b,n*b))
+    #B = ctf.ones((n*b,n*b))
     Ac = A.copy()
     Bc = B.copy()
     C_naive = naive_gemm(A,B,n,b)
@@ -76,17 +77,17 @@ def test(n,b):
     #print(C_fast)
     #print("Ratio is")
     #print(C_fast/C_naive)
-    err = np.linalg.norm(C_naive-C_fast)/np.linalg.norm(C_naive)
+    err = ctf.norm(C_naive-C_fast)/ctf.norm(C_naive)
     print("n=",n,"b=",b)
     print("Relative two norm error is",err)
 
 
 def bench(n,b,niter):
-    A = np.ones((n,b,n,b))
-    B = np.ones((n,b,n,b))
-    np.random.seed(42)
-    A = np.random.random((n,b,n,b))
-    B = np.random.random((n,b,n,b))
+    A = ctf.ones((n,b,n,b))
+    B = ctf.ones((n,b,n,b))
+    ctf.random.seed(42)
+    A = ctf.random.random((n,b,n,b))
+    B = ctf.random.random((n,b,n,b))
     A = (A + A.transpose([2,1,0,3])).reshape((n*b,n*b))
     B = (B + B.transpose([2,1,0,3])).reshape((n*b,n*b))
     Ac = A.copy()
@@ -150,6 +151,7 @@ if __name__ == "__main__":
     n = args.n
     b = args.b
     niter = args.niter
+    w = ctf.comm()
     test(n,b)
     bench(n,b,niter)
 
