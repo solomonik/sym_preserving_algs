@@ -19,7 +19,7 @@ s1t1v1_blk: s1t1v1_blk.cxx Makefile $(CTF_DIR)/lib/libctf.a
 	$(MPICXX) s1t1v1_blk.cxx -o s1t1v1_blk $(CTF_LIBS)
 
 s1t1v1_blk_seq: s1t1v1_blk_seq.cxx Makefile
-	$(CC) s1t1v1_blk.cxx -o s1t1v1_blk $(BLAS_LIBS)
+	$(CC) s1t1v1_blk_seq.cxx -o s1t1v1_blk_seq $(BLAS_LIBS)
 
 clean:
 	rm -f s1t1v1_blk s1t1v1_blk_seq test fast_cccsdt_ctr
