@@ -1,3 +1,7 @@
+#include <limits>
+#include <stdlib.h>
+#include <sys/time.h>
+
 #if FTN_UNDERSCORE
 #define DGEMM dgemm_
 #define DGEMM_BATCH dgemm_batch_
@@ -8,6 +12,19 @@
 #define DGEMM_BATCH dgemm_batch
 #define DAXPY daxpy
 #endif
+
+static double __timer(){
+  static bool initialized = false;
+  static struct timeval start;
+  struct timeval end;
+  if(!initialized){
+    gettimeofday( &start, NULL );
+    initialized = true;
+  }
+  gettimeofday( &end, NULL );
+
+  return (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
+}
 
 extern "C"
 void DGEMM_BATCH(
@@ -205,20 +222,105 @@ double * fast_gemm(double const * pA, double const * pB, int64_t n, int64_t b){
       else 
         axpy(b*b, -1., A[i,j], sA[i]) 
     }
+  }
 
   return C;
 }
 
 
-int main(int argc, char ** argv){
-  int64_t n = 13, b = 4;
+char* getCmdOption(char ** begin,
+                   char ** end,
+                   const   std::string & option){
+  char ** itr = std::find(begin, end, option);
+  if (itr != end && ++itr != end){
+    return *itr;
+  }
+  return 0;
+}
 
-  MPI_Init(&argc, &argv);
+void bench_s1t1v1_blk(int64_t n, int64_t b, int niter){
+  srand48(42);
+  double * A = new double[n*b*n*b];
+  double * B = new double[n*b*n*b];
+  for (int i=0; i<n; i++){
+    for (int j=0; j<=i; j++){
+      for (int k=0; k<b; k++){
+        for (int l=0; l<b; l++){
+          A[(i*b+k)*n*b+(j*b+l)] = drand48();
+          A[(j*b+k)*n*b+(i*b+l)] = A[(i*b+k)*n*b+(j*b+l)];
+          B[(i*b+k)*n*b+(j*b+l)] = drand48();
+          B[(j*b+k)*n*b+(i*b+l)] = B[(i*b+k)*n*b+(j*b+l)];
+        }
+      }
+    }
+  }
+  printf("Naive times:\n");
+  for (int i=0; i<niter; i++){
+    double t_st = __time();
+    double * C = naive_gemm(A,B,n,b);
+    double t_end = __time();
+    printf("%lf\n",t_end-t_st);
+    delete [] C;
+  }
+  printf("Fast times:\n");
+  for (int i=0; i<niter; i++){
+    double t_st = __time();
+    double * C = fast_gemm(A,B,n,b);
+    double t_end = __time();
+    printf("%lf\n",t_end-t_st);
+    delete [] C;
+  }
+}
+
+void test_s1t1v1_blk(int64_t n, int64_t b){
+  srand48(42);
+  double * A = new double[n*b*n*b];
+  double * B = new double[n*b*n*b];
+  for (int i=0; i<n; i++){
+    for (int j=0; j<=i; j++){
+      for (int k=0; k<b; k++){
+        for (int l=0; l<b; l++){
+          A[(i*b+k)*n*b+(j*b+l)] = drand48();
+          A[(j*b+k)*n*b+(i*b+l)] = A[(i*b+k)*n*b+(j*b+l)];
+          B[(i*b+k)*n*b+(j*b+l)] = drand48();
+          B[(j*b+k)*n*b+(i*b+l)] = B[(i*b+k)*n*b+(j*b+l)];
+        }
+      }
+    }
+  }
+  double * C_ref = naive_gemm(A,B,n,b);
+  double * C_fst = fast_gemm(A,B,n,b);
+  double err = 0.;
+  double nrm = 0.;
+  for (int i=0; i<n; i++){
+    for (int j=0; j<=i; j++){
+      for (int k=0; k<b; k++){
+        for (int l=0; l<b; l++){
+          double e = C_ref[(i*b+k)*n*b+(j*b+l)]-C_fst[(i*b+k)*n*b+(j*b+l)];
+          err += e*e;
+          double r = C_ref[(i*b+k)*n*b+(j*b+l)];
+          nrm += r*r;
+        }
+      }
+    }
+  }
+  printf("Relative Frobenius norm error between naive and fast is %lf\n",std::sqrt(err/nrm));
+}
+
+int main(int argc, char ** argv){
+  int const in_num = argc;
+  char ** input_str = argv;
+
+  int64_t n, b;
+  if (getCmdOption(input_str, input_str+in_num, "-n")){
+    n = atoi(getCmdOption(input_str, input_str+in_num, "-n"));
+    if (n < 0) n = 4;
+  } else n = 4;
+  if (getCmdOption(input_str, input_str+in_num, "-b")){
+    b = atoi(getCmdOption(input_str, input_str+in_num, "-b"));
+    if (b < 0) b = 3;
+  } else b = 3;
 
   test_s1t1v1_blk(n,b);
-
-  test_sq4d(n,b);
-
-  MPI_Finalize();
   return 0;
 }
