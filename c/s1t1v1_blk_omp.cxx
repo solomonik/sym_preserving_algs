@@ -215,6 +215,8 @@ double * fast_gemm(double const * pA, double const * pB, int64_t n, int64_t b){
   for (int i=0; i<b*b; i++){
     omp_init_lock(locks+i);
   }
+  double t_st = __timer();
+
   #pragma omp parallel
   {
     double * tmp_A = new double[b*b];
@@ -226,8 +228,10 @@ double * fast_gemm(double const * pA, double const * pB, int64_t n, int64_t b){
     for (int64_t i=0; i<n; i++){
       for (int64_t j=0; j<i; j++){
         for (int64_t k=0; k<j; k++){
-          if (s%ntd != tid)
+          if (s%ntd != tid){
+            s++;
             continue;
+          } else s++;
           std::fill(tmp_A, tmp_A+b*b, 0.);
           std::fill(tmp_B, tmp_B+b*b, 0.);
           std::fill(tmp_C, tmp_C+b*b, 0.);
@@ -254,6 +258,8 @@ double * fast_gemm(double const * pA, double const * pB, int64_t n, int64_t b){
     delete [] tmp_B;
     delete [] tmp_C;
   }
+  double t_end = __timer();
+  printf("main fast gemm loop took %lf sec\n",t_end-t_st);
   delete [] locks;
   locks = new omp_lock_t[b];
   for (int i=0; i<b; i++){
