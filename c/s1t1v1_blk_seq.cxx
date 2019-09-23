@@ -1,9 +1,18 @@
-#include <limits>
-#include <stdlib.h>
+#include <string.h>
+#include <string>
 #include <stdio.h>
 #include <assert.h>
-#include <cstring>
+#include <stdint.h>
+#include <math.h>
 #include <algorithm>
+#include <list>
+#include <vector>
+#include <complex>
+#include <unistd.h>
+#include <iostream>
+#include <limits.h>
+#include <random>
+
 #include <sys/time.h>
 
 #define FTN_UNDERSCORE 1
@@ -365,7 +374,7 @@ int main(int argc, char ** argv){
 
   printf("Testing n=%ld b=%ld\n",n,b);
   test_s1t1v1_blk(n,b);
-  printf("Benchmarking n=%ld b=%ld niter=%d\n",n,b,niter);
+  printf("Benchmarking n=%ld b=%ld niter=%ld\n",n,b,niter);
   bench_s1t1v1_blk(n,b,niter);
   return 0;
 }
