@@ -349,7 +349,7 @@ char* getCmdOption(char ** begin,
   return 0;
 }
 
-void bench_s1t1v1_blk(int64_t n, int64_t b, int niter){
+void bench_s1t1v1_blk(int64_t n, int64_t b, int niter_nv, int niter_fs){
   srand48(42);
   double * A = new double[n*b*n*b];
   double * B = new double[n*b*n*b];
@@ -366,21 +366,31 @@ void bench_s1t1v1_blk(int64_t n, int64_t b, int niter){
     }
   }
   printf("Naive times:\n");
-  for (int i=0; i<niter; i++){
+  double t_nv = 0.;
+  for (int i=0; i<niter_nv; i++){
     double t_st = __timer();
     double * C = naive_gemm(A,B,n,b);
     double t_end = __timer();
-    printf("%lf\n",t_end-t_st);
+    double t = t_end - t_st;
+    printf("%lf\n",t);
+    t_nv += t;
     delete [] C;
   }
+  printf("Average time for naive is \n");
+  printf("%lf\n",t_nv/niter_nv);
   printf("Fast times:\n");
-  for (int i=0; i<niter; i++){
+  double t_fs = 0.;
+  for (int i=0; i<niter_fs; i++){
     double t_st = __timer();
     double * C = fast_gemm(A,B,n,b);
     double t_end = __timer();
-    printf("%lf\n",t_end-t_st);
+    double t = t_end - t_st;
+    printf("%lf\n",t);
+    t_fs += t;
     delete [] C;
   }
+  printf("Average time for naive is \n");
+  printf("%lf\n",t_fs/niter_fs);
 }
 
 void test_s1t1v1_blk(int64_t n, int64_t b){
@@ -426,7 +436,8 @@ int main(int argc, char ** argv){
   int const in_num = argc;
   char ** input_str = argv;
 
-  int64_t n, b, niter;
+  int64_t n, b;
+  int test, niter_nv, niter_fs;
   if (getCmdOption(input_str, input_str+in_num, "-n")){
     n = atoi(getCmdOption(input_str, input_str+in_num, "-n"));
     if (n < 0) n = 4;
@@ -435,14 +446,24 @@ int main(int argc, char ** argv){
     b = atoi(getCmdOption(input_str, input_str+in_num, "-b"));
     if (b < 0) b = 3;
   } else b = 3;
-  if (getCmdOption(input_str, input_str+in_num, "-niter")){
-    niter = atoi(getCmdOption(input_str, input_str+in_num, "-niter"));
-    if (niter < 0) niter = 3;
-  } else niter = 3;
+  if (getCmdOption(input_str, input_str+in_num, "-niter_nv")){
+    niter_nv = atoi(getCmdOption(input_str, input_str+in_num, "-niter_nv"));
+    if (niter_nv < 0) niter_nv = 3;
+  } else niter_nv = 3;
+  if (getCmdOption(input_str, input_str+in_num, "-niter_fs")){
+    niter_fs = atoi(getCmdOption(input_str, input_str+in_num, "-niter_fs"));
+    if (niter_fs < 0) niter_fs = 3;
+  } else niter_fs = 3;
+  if (getCmdOption(input_str, input_str+in_num, "-test")){
+    test = atoi(getCmdOption(input_str, input_str+in_num, "-test"));
+    if (test < 0) test = 1;
+  } else test = 1;
 
-  printf("Testing n=%ld b=%ld\n",n,b);
-  test_s1t1v1_blk(n,b);
-  printf("Benchmarking n=%ld b=%ld niter=%ld\n",n,b,niter);
-  bench_s1t1v1_blk(n,b,niter);
+  if (test > 0){
+    printf("Testing n=%ld b=%ld\n",n,b);
+    test_s1t1v1_blk(n,b);
+  }
+  printf("Benchmarking n=%ld b=%ld niter_nv=%d niter_fs=%d\n",n,b,niter_nv,niter_fs);
+  bench_s1t1v1_blk(n,b,niter_nv,niter_fs);
   return 0;
 }
