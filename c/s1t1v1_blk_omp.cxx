@@ -62,6 +62,19 @@ static double __timer(){
   return (end.tv_sec - start.tv_sec) + 1.0e-6 * (end.tv_usec - start.tv_usec);
 }
 
+void get_omp_ij_phases(int & ii, int & ip, int & jj, int & jp){
+  int tid = omp_get_thread_num();
+  int ntd = omp_get_num_threads();
+  ip = 1;
+  jp = ntd/ip;
+  while (ip < jp || ip*jp < ntd){
+    ip++;
+    jp = ntd/ip;
+  }
+  ii = tid / jp;
+  jj = tid % jp;
+}
+
 extern "C"
 void DGEMM_BATCH(
           const char *,
@@ -133,12 +146,17 @@ double * naive_gemm(double const * A, double const * B, int64_t n, int64_t b){
   //  double alpha = 1.;
   //  DAXPY(&m, &alpha, C2+i, &m, C+i*m, &one);
   //}
-  for (int i=0; i<n; i++){
-    for (int j=0; j<=i; j++){
-      for (int k=0; k<b; k++){
-        for (int l=0; l<b; l++){
-          C[(j*b+k)*n*b+(i*b+l)] += C[(i*b+k)*n*b+(j*b+l)];
-          C[(i*b+k)*n*b+(j*b+l)]  = C[(j*b+k)*n*b+(i*b+l)];
+  #pragma omp parallel
+  {
+    int ii, ip, jj, jp;
+    get_omp_ij_phases(ii, ip, jj, jp);
+    for (int64_t i=ii; i<n; i+=ip){
+      for (int64_t j=jj; j<=i; j+=jp){
+        for (int k=0; k<b; k++){
+          for (int l=0; l<b; l++){
+            C[(j*b+k)*n*b+(i*b+l)] += C[(i*b+k)*n*b+(j*b+l)];
+            C[(i*b+k)*n*b+(j*b+l)]  = C[(j*b+k)*n*b+(i*b+l)];
+          }
         }
       }
     }
@@ -146,19 +164,6 @@ double * naive_gemm(double const * A, double const * B, int64_t n, int64_t b){
 
   //delete [] C2;
   return C;
-}
-
-void get_omp_ij_phases(int & ii, int & ip, int & jj, int & jp){
-  int tid = omp_get_thread_num();
-  int ntd = omp_get_num_threads();
-  ip = 1;
-  jp = ntd/ip;
-  while (ip < jp || ip*jp < ntd){
-    ip++;
-    jp = ntd/ip;
-  }
-  ii = tid / jp;
-  jj = tid % jp;
 }
 
 double * fast_gemm(double const * pA, double const * pB, int64_t n, int64_t b){
@@ -211,12 +216,11 @@ double * fast_gemm(double const * pA, double const * pB, int64_t n, int64_t b){
     sC[i] = new double[b*b];
     std::fill(sC[i], sC[i]+b*b, 0.);
   }
-  omp_lock_t * locks = new omp_lock_t[b*b];
-  for (int i=0; i<b*b; i++){
+  omp_lock_t * locks = new omp_lock_t[n*n];
+  for (int i=0; i<n*n; i++){
     omp_init_lock(locks+i);
   }
   double t_st = __timer();
-
   #pragma omp parallel
   {
     double * tmp_A = new double[b*b];
@@ -261,8 +265,8 @@ double * fast_gemm(double const * pA, double const * pB, int64_t n, int64_t b){
   double t_end = __timer();
   printf("main fast gemm loop took %lf sec\n",t_end-t_st);
   delete [] locks;
-  locks = new omp_lock_t[b];
-  for (int i=0; i<b; i++){
+  locks = new omp_lock_t[n];
+  for (int i=0; i<n; i++){
     omp_init_lock(locks+i);
   }
   #pragma omp parallel
