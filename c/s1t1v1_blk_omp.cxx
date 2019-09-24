@@ -375,7 +375,8 @@ void bench_s1t1v1_blk(int64_t n, int64_t b, int niter_nv, int niter_fs){
       }
     }
   }
-    if (niter_nv > 0){
+  std::vector<double> ntimes;
+  if (niter_nv > 0){
     printf("Naive times:\n");
     double t_nv = 0.;
     for (int i=0; i<niter_nv; i++){
@@ -383,13 +384,18 @@ void bench_s1t1v1_blk(int64_t n, int64_t b, int niter_nv, int niter_fs){
       double * C = naive_gemm(A,B,n,b);
       double t_end = __timer();
       double t = t_end - t_st;
+      ntimes.push_back(t);
       printf("%lf\n",t);
       t_nv += t;
       delete [] C;
     }
     printf("Average time for naive is \n");
     printf("%lf\n",t_nv/niter_nv);
+    printf("Median time for naive is \n");
+    std::sort(&ntimes[0], &ntimes[0]+ntimes.size());
+    printf("%lf\n",ntimes[ntimes.size()/2]);
   }
+  std::vector<double> ftimes;
   if (niter_fs > 0){
     printf("Fast times:\n");
     double t_fs = 0.;
@@ -398,12 +404,16 @@ void bench_s1t1v1_blk(int64_t n, int64_t b, int niter_nv, int niter_fs){
       double * C = fast_gemm(A,B,n,b);
       double t_end = __timer();
       double t = t_end - t_st;
+      ftimes.push_back(t);
       printf("%lf\n",t);
       t_fs += t;
       delete [] C;
     }
     printf("Average time for naive is \n");
     printf("%lf\n",t_fs/niter_fs);
+    printf("Median time for naive is \n");
+    std::sort(&ftimes[0], &ftimes[0]+ftimes.size());
+    printf("%lf\n",ftimes[ftimes.size()/2]);
   }
 }
 
