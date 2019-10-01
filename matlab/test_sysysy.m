@@ -11,7 +11,6 @@ function test_sysysy(ns)
       B=rand(n,n)-.5;
       B=B+B';
 
-      % build householder rank-1 Q = (I-2uuT) which is symmetric and compute  2I = Q*Q + Q*Q
       C_ans = A*B+B*A;
     
       C = sysysy(A,B);
